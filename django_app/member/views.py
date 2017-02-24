@@ -1,7 +1,8 @@
 from pprint import pprint
 
 import requests
-from django.shortcuts import render
+from django.contrib.auth import login, authenticate, logout
+from django.shortcuts import render, redirect
 
 from facebook import settings
 
@@ -12,6 +13,11 @@ def login_fbv(request):
         'facebook_app_id': facebook_app_id,
     }
     return render(request, 'member/login.html', context)
+
+
+def logout_fbv(request):
+    logout(request)
+    return redirect('index')
 
 
 def login_facebook(request):
@@ -51,3 +57,29 @@ def login_facebook(request):
         pprint(dict_debug_token)
         USER_ID = dict_debug_token['data']['user_id']
         print('USER_ID : {}'.format(USER_ID))
+
+        # 해당 USER_ID로 그래프 API에 유저 정보 요청
+        url_api_user = 'https://graph.facebook.com/{user_id}'.format(
+            user_id=USER_ID
+        )
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'gender',
+            'picture',
+            'email',
+        ]
+        params = {
+            'fields': ','.join(fields),
+            'access_token': USER_ACCESS_TOKEN,
+        }
+        r = requests.get(url_api_user, params)
+        dict_user_info = r.json()
+        pprint(dict_user_info)
+
+        # 페이스븍 USER_ID만으로 인증
+        # dict 전달할 수 있게 변경 (이미지 사이즈가 작으므로 backends.py에서 다시 처리)
+        user = authenticate(facebook_id=USER_ID, extra_fields=dict_user_info)
+        login(request, user)
+        return redirect('index')

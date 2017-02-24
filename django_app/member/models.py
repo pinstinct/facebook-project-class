@@ -24,7 +24,13 @@ from django.utils.crypto import get_random_string
 
 
 class MyUser(AbstractUser):
-    pass
+    img_profile = models.ImageField(upload_to='user', blank=True)
+
+    def __str__(self):
+        return '{}{}'.format(
+            self.last_name,
+            self.first_name,
+        )
     # 만약 user id 중복을 방지하기 위한 로직
     # 사용자 입장에서는 아이디를 2개 가질 수 있게 됨
     # CHOICES_USER_TYPE = (
